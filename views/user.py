@@ -64,6 +64,37 @@ def fetch_all_users():
         }
         user_list.append(user_data)
     return jsonify(user_list), 200
+# update_user
+@user_bp.route("/users/<int:user_id>", methods=["PATCH"])
+def update_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    data = request.get_json()
+    username = data.get("username")
+    email = data.get("email")
+    is_admin = data.get("is_admin")
+    is_blocked = data.get("is_blocked")
+
+    if username:
+        if User.query.filter_by(username=username).first() and username != user.username:
+            return jsonify({"error": "Username already exists"}), 400
+        user.username = username
+
+    if email:
+        if User.query.filter_by(email=email).first() and email != user.email:
+            return jsonify({"error": "Email already exists"}), 400
+        user.email = email
+
+    if is_admin is not None:
+        user.is_admin = bool(is_admin)
+    if is_blocked is not None:
+        user.is_blocked = bool(is_blocked)
+
+    db.session.commit()
+    return jsonify({"success": "User updated successfully"}), 200
+
 
 # delete user
 @user_bp.route("/users/<user_id>", methods=["DELETE"])
